@@ -7,5 +7,6 @@
   "solidjs/solid",
   "QwikDev/qwik",
   "alpinejs/alpine",
-  "vercel/next.js"
+  "vercel/next.js",
+  "nuxt/nuxt"
 ]
