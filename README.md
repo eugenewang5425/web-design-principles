@@ -130,10 +130,10 @@ flowchart LR
 <!-- ROUND:START -->
 | Metric | Value |
 |---|---|
-| Rounds done | **7** (target: 100 rounds / 10,000 cases) |
-| Cases collected | **700** |
-| Last round | +100 cases · 1000 raw issues scanned |
-| Top symptom buckets | browser-quirk(219) · form-input(205) · media-cls(143) · focus-a11y(109) · race-state(93) · ssr-hydration(73) |
+| Rounds done | **8** (target: 100 rounds / 10,000 cases) |
+| Cases collected | **800** |
+| Last round | +100 cases · 800 raw issues scanned |
+| Top symptom buckets | browser-quirk(244) · form-input(226) · media-cls(169) · focus-a11y(131) · race-state(110) · ssr-hydration(89) |
 | Updated | 2026-09-05 · full index: [BUG-INDEX.md](cases/BUG-INDEX.md) |
 <!-- ROUND:END -->
 
@@ -162,4 +162,5 @@ Aggregated crawl sources (repos whose public issues were mined and anonymized in
 Cases themselves carry **no** source identity — this list is the only place sources appear.
 
 - facebook/react
+- vuejs/core
 <!-- SOURCES:END -->

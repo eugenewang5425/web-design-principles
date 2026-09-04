@@ -1,3 +1,4 @@
 [
-  "facebook/react"
+  "facebook/react",
+  "vuejs/core"
 ]
