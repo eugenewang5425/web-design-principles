@@ -81,6 +81,22 @@ Most "web design" lists are encyclopedic; this one is **practical-first**. Every
 
 ---
 
+## ⚠️ Case Study / 实战案例：滚动条引发的"抖动"（2026-09）
+
+一个真实踩坑记录 — 对应了上面哪条原则，以及哪些原则**没有**覆盖。
+
+**现象**：页面在 Windows Chrome（经典滚动条）特定缩放（50%/80%/90%/100%）下滚到底时出现水平滚动条，出现/消失循环 → 页面 ±15px 抖动、末端导航高亮翻转（行程恰好 = 滚动条厚度）。
+
+**映射到本清单的原则：**
+- **已覆盖（设计层）**：WCAG 1.4.10 *Reflow*（缩放下不得出现水平滚动）→ Heydon 无障碍原则 / 清单 accessibility 类目；"约束式设计"（token 化间距、max-width:100% + min-width:0）→ theme-ui / 350-layout-compositions；"动效可中断"（动画让位于用户输入）→ motion-design-skill
+- **未覆盖（实现层 — 本仓库的独特价值）**：
+  1. **滚动监测逻辑不能假设 maxY 稳定**：经典滚动条出现/消失使 maxY 漂移约 15px，"距底阈值"型逻辑（scroll-spy 末端区）必须用**带宽 ≥ 阈值 + 双向迟滞**，或从源头消除水平溢出（overflow-x: clip）
+  2. **测试环境 ≠ 实机**：无头浏览器的 Overlay 滚动条 & 固定 DPR 无法复现经典滚动条相关缺陷——本地"全绿"不等于实机正确，关键交互要在实机多缩放档验证
+
+**修复**：根容器 overflow-x: clip + 导航换行护栏（消灭溢出源）；scroll-spy 用"阅读线 + 方向迟滞 + 宽末端区"吸收 maxY 漂移。[完整 issue 记录](https://github.com/eugenewang5425/eugenewang5425.github.io/issues/1)
+
+---
+
 ## 6. Contribute
 
 - 原则是**活的**：发现更好/更高星/更实用的项目 → [开 Issue](https://github.com/eugenewang5425/web-design-principles/issues) 或 PR
