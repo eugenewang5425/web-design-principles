@@ -181,6 +181,9 @@ mkdirSync(dataDir, { recursive: true });
 mkdirSync(chunkDir, { recursive: true });
 
 const progress = loadJSON(D('data/progress.json'), { repoIdx: 0, page: 1, round: 0 });
+progress.repoIdx = Number.isInteger(progress.repoIdx) ? progress.repoIdx : 0;
+progress.page = Number.isInteger(progress.page) ? progress.page : 1;
+progress.round = Number.isInteger(progress.round) ? progress.round : 0;
 const seen = loadJSON(D('data/seen.json'), {});
 const sources = loadJSON(D('data/sources.json'), []);
 const seqState = loadJSON(D('data/seq.json'), { next: 1001 });
@@ -248,7 +251,10 @@ async function runRound(roundNo) {
     else progress.page++;
   }
 
-  if (newCount === 0) return { newCount, rawScanned };
+  if (newCount === 0) {
+    console.log(`[debug] scanned ${rawScanned} raw issues, repoIdx=${progress.repoIdx}, page=${progress.page}`);
+    return { newCount, rawScanned };
+  }
 
   appendFileSync(D('data/cases.jsonl'), collected.map((c) => JSON.stringify(c)).join('\n') + '\n');
   writeFileSync(D('data/seen.json'), JSON.stringify(seen));
