@@ -130,10 +130,10 @@ flowchart LR
 <!-- ROUND:START -->
 | Metric | Value |
 |---|---|
-| Rounds done | **31** (target: 100 rounds / 10,000 cases) |
-| Cases collected | **3100** |
-| Last round | +100 cases · 1500 raw issues scanned |
-| Top symptom buckets | form-input(810) · media-cls(685) · browser-quirk(665) · focus-a11y(502) · animation-motion(430) · ssr-hydration(394) |
+| Rounds done | **32** (target: 100 rounds / 10,000 cases) |
+| Cases collected | **3200** |
+| Last round | +100 cases · 958 raw issues scanned |
+| Top symptom buckets | form-input(831) · media-cls(724) · browser-quirk(689) · focus-a11y(509) · animation-motion(438) · ssr-hydration(414) |
 | Updated | 2026-09-05 · full index: [BUG-INDEX.md](cases/BUG-INDEX.md) |
 <!-- ROUND:END -->
 
@@ -167,4 +167,5 @@ Cases themselves carry **no** source identity — this list is the only place so
 - angular/angular
 - preactjs/preact
 - solidjs/solid
+- QwikDev/qwik
 <!-- SOURCES:END -->

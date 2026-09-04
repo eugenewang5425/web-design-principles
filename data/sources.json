@@ -4,5 +4,6 @@
   "sveltejs/svelte",
   "angular/angular",
   "preactjs/preact",
-  "solidjs/solid"
+  "solidjs/solid",
+  "QwikDev/qwik"
 ]
