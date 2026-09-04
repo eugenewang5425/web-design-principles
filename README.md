@@ -1,8 +1,9 @@
 # Practical Web Design Principles ・ 网页设计原则实用汇总
 
 > A curated, **actionable** collection of web design principles — layout, typography, color,
-> motion, accessibility, design tokens — plus the new generation of **AI-agent design skills**.
-> 精选可落地的网页设计原则与资源：从经典指南到 AI 时代的 Agent 设计技能。
+> motion, accessibility, design tokens — plus the new generation of **AI-agent design skills**,
+> our own **31-principle system**, and a **10,000-case anonymized bug bank** with a live search UI.
+> 精选可落地的网页设计原则与资源：从经典指南到 AI 时代的 Agent 设计技能，再到自建原则体系与真实 bug 案例库。
 
 <p align="center">
   <img alt="license" src="https://img.shields.io/badge/license-MIT-blue?style=for-the-badge" />
@@ -18,10 +19,14 @@
 **Why this list / 为什么有这份列表**
 Most "web design" lists are encyclopedic; this one is **practical-first**. Every entry answers:
 "读完能不能立刻用到我的页面上？"（每条都标注 ★ 星数与其真正的用途。）
+And it goes further than a list: we distilled everything into our own principle system and a
+real-world bug case bank — **apply the principles, then search how real projects broke them**
+（原则告诉你"该怎样"，案例库告诉你"实际怎么坏的、在什么环境下坏的"）.
 
 **Best for / 适合谁**
 - Frontend devs building hand-rolled pages (zero-framework) — 手写页面的前端开发者
 - AI-agent 时代的工作流：把原则变成 *skills* 交给 Claude Code / Cursor / Copilot
+- Debugging: search 10,000 anonymized cases by symptom/environment — 按 bug 症状与环境搜同类案例
 
 ---
 
@@ -84,17 +89,20 @@ Most "web design" lists are encyclopedic; this one is **practical-first**. Every
 
 ## ⚠️ Case Study / 实战案例：滚动条引发的"抖动"（2026-09）
 
+> 本案例已正式归档进案例库，教学版（含 ❌/✅ 代码与环境矩阵）见 **[principles/WITH-CASES.md 的 CASE-0001~0004](principles/WITH-CASES.md)**。
+> 下方为速览；同族案例在案例库 `overflow-scroll` 桶有 **1,280 条**（按症状反查：[BUG-INDEX](cases/BUG-INDEX.md) / [在线检索](https://eugenewang5425.github.io/web-design-principles/)）。
+
 一个真实踩坑记录 — 对应了上面哪条原则，以及哪些原则**没有**覆盖。
 
 **现象**：页面在 Windows Chrome（经典滚动条）特定缩放（50%/80%/90%/100%）下滚到底时出现水平滚动条，出现/消失循环 → 页面 ±15px 抖动、末端导航高亮翻转（行程恰好 = 滚动条厚度）。
 
-**映射到本清单的原则：**
-- **已覆盖（设计层）**：WCAG 1.4.10 *Reflow*（缩放下不得出现水平滚动）→ Heydon 无障碍原则 / 清单 accessibility 类目；"约束式设计"（token 化间距、max-width:100% + min-width:0）→ theme-ui / 350-layout-compositions；"动效可中断"（动画让位于用户输入）→ motion-design-skill
-- **未覆盖（实现层 — 本仓库的独特价值）**：
-  1. **滚动监测逻辑不能假设 maxY 稳定**：经典滚动条出现/消失使 maxY 漂移约 15px，"距底阈值"型逻辑（scroll-spy 末端区）必须用**带宽 ≥ 阈值 + 双向迟滞**，或从源头消除水平溢出（overflow-x: clip）
-  2. **测试环境 ≠ 实机**：无头浏览器的 Overlay 滚动条 & 固定 DPR 无法复现经典滚动条相关缺陷——本地"全绿"不等于实机正确，关键交互要在实机多缩放档验证
+**映射到本仓库的原则：**
+- **设计层已覆盖**：WCAG 1.4.10 *Reflow* → **P-A1**；约束式设计（token 化间距、max-width:100% + min-width:0）→ **P-A2 / P-A4**；动效可中断 → **P-D1**
+- **实现层（本仓库案例库的独特价值，经典清单都没有）**：
+  1. **滚动监测逻辑不能假设 maxY 稳定** → **P-F1 / P-G1**：经典滚动条出现/消失使 maxY 漂移约 15px，"距底阈值"型逻辑必须用**带宽 ≥ 阈值 + 双向迟滞**
+  2. **测试环境 ≠ 实机** → **P-G3**：无头浏览器的 Overlay 滚动条 & 固定 DPR 无法复现经典滚动条缺陷——本地"全绿"不等于实机正确
 
-**修复**：根容器 overflow-x: clip + 导航换行护栏（消灭溢出源）；scroll-spy 用"阅读线 + 方向迟滞 + 宽末端区"吸收 maxY 漂移。[完整 issue 记录](https://github.com/eugenewang5425/eugenewang5425.github.io/issues/1)
+**修复（已全部落地）**：根容器 `overflow-x: clip` 消灭溢出源；导航点击 JS 瞬时跳转（绕开 Chrome 151 平滑滚动失准）；scroll-spy 方向无关滞回（120 进/240 出）。三层根因完整记录见 [eugenewang5425.github.io Issue #1](https://github.com/eugenewang5425/eugenewang5425.github.io/issues/1)。
 
 ---
 
@@ -152,7 +160,8 @@ flowchart LR
 
 MIT（本目录内容）：清单与评注可自由使用；各项目版权归属其各自作者。
 
-*Curated by [eugenewang5425](https://github.com/eugenewang5425) — GIS→Robotics 路上的前端实践。*
+*Curated by [eugenewang5425](https://github.com/eugenewang5425) — GIS→Robotics 路上的前端实践 ·
+🌐 个人主页 [eugenewang5425.github.io](https://eugenewang5425.github.io/)（本站 Projects 卡片可直达本仓库检索页）.*
 
 ---
 
