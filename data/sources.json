@@ -10,5 +10,6 @@
   "vercel/next.js",
   "nuxt/nuxt",
   "remix-run/remix",
-  "gatsbyjs/gatsby"
+  "gatsbyjs/gatsby",
+  "sveltejs/kit"
 ]
