@@ -1,0 +1,363 @@
+#!/usr/bin/env node
+// Round collector — fetch 100 high-value issues per round, anonymize, bucket, index, commit.
+// Usage: node tools/round.mjs [--rounds N]
+// Principles of this tool: cases keep bug + environment, never source identity.
+// Source repos are only aggregated in README's Sources section.
+
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, appendFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const D = (p) => join(ROOT, p);
+const TODAY = () => new Date().toISOString().slice(0, 10);
+
+// ---------- token (from git credential manager, never stored) ----------
+function getToken() {
+  const out = execFileSync('git', ['credential', 'fill'], {
+    cwd: ROOT, input: 'protocol=https\nhost=github.com\n', encoding: 'utf8',
+  });
+  const m = out.match(/^password=(.+)$/m);
+  if (!m) throw new Error('no github token in git credential store');
+  return m[1].trim();
+}
+const TOKEN = getToken();
+
+// ---------- crawl matrix ----------
+const KEYWORDS = [
+  'overflow', 'scrollbar', 'z-index', 'stacking context', 'flexbox', 'grid layout',
+  'responsive', 'viewport', 'media query', 'breakpoint', 'safari', 'ios',
+  'animation', 'transition', 'smooth scroll', 'scrollintoview', 'scroll-snap', 'focus',
+  'aria', 'screen reader', 'dark mode', 'contrast', 'font', 'layout shift',
+  'hydration', 'memory leak', 'event listener', 'reflow', 'jank', 'sticky',
+  'position fixed', 'modal', 'input zoom', 'text overflow', 'ellipsis',
+  'aspect ratio', 'lazy loading', 'touch', 'wheel event',
+];
+const REPOS = [
+  ['facebook/react', 'framework'], ['vuejs/core', 'framework'], ['sveltejs/svelte', 'framework'],
+  ['angular/angular', 'framework'], ['preactjs/preact', 'framework'], ['solidjs/solid', 'framework'],
+  ['QwikDev/qwik', 'framework'], ['alpinejs/alpine', 'framework'],
+  ['vercel/next.js', 'meta-framework'], ['nuxt/nuxt', 'meta-framework'],
+  ['remix-run/remix', 'meta-framework'], ['gatsbyjs/gatsby', 'meta-framework'], ['sveltejs/kit', 'meta-framework'],
+  ['vitejs/vite', 'build-tool'], ['webpack/webpack', 'build-tool'],
+  ['tailwindlabs/tailwindcss', 'css-framework'], ['bootstrap/bootstrap', 'css-framework'],
+  ['styled-components/styled-components', 'css-in-js'], ['emotion-js/emotion', 'css-in-js'],
+  ['mui/material-ui', 'component-library'], ['ant-design/ant-design', 'component-library'],
+  ['element-plus/element-plus', 'component-library'], ['chakra-ui/chakra-ui', 'component-library'],
+  ['shadcn-ui/ui', 'component-library'], ['vuetifyjs/vuetify', 'component-library'],
+  ['primefaces/primeng', 'component-library'], ['primefaces/primevue', 'component-library'],
+  ['react-bootstrap/react-bootstrap', 'component-library'], ['ionic-team/ionic-framework', 'component-library'],
+  ['framer/motion', 'animation-library'], ['pmndrs/react-spring', 'animation-library'], ['greensock/GSAP', 'animation-library'],
+  ['chartjs/Chart.js', 'chart-library'], ['d3/d3', 'chart-library'],
+  ['apexcharts/apexcharts.js', 'chart-library'], ['recharts/recharts', 'chart-library'],
+  ['mrdoob/three.js', '3d-library'], ['pmndrs/react-three-fiber', '3d-library'],
+  ['Leaflet/Leaflet', 'map-library'],
+  ['nolimits4web/swiper', 'ui-component'], ['fullcalendar/fullcalendar', 'ui-component'],
+  ['quilljs/quill', 'editor'], ['ueberdosis/tiptap', 'editor'], ['microsoft/monaco-editor', 'editor'],
+  ['videojs/video.js', 'media-player'], ['sampotts/plyr', 'media-player'], ['video-dev/hls.js', 'media-player'],
+];
+const SORTS = ['reactions', 'comments', 'interactions'];
+const PAGES = 4;
+const K = KEYWORDS.length, R = REPOS.length, S = SORTS.length;
+const MATRIX_SIZE = K * R * S * PAGES;
+function comboAt(i) {
+  const kw = KEYWORDS[i % K];
+  const repo = REPOS[Math.floor(i / K) % R];
+  const sort = SORTS[Math.floor(i / (K * R)) % S];
+  const page = 1 + Math.floor(i / (K * R * S)) % PAGES;
+  return { kw, repo, sort, page };
+}
+
+// ---------- taxonomy: bug symptom bucket -> principle ids ----------
+const BUCKETS = [
+  { id: 'overflow-scroll', en: 'Overflow & Scrollbars', zh: '溢出与滚动条', principles: ['P-A1', 'P-A2', 'P-G1', 'P-F1'],
+    re: /overflow|scrollbar|scroll bar|hscroll|scrollwidth|scrollheight|clientwidth|horizontal scroll/ },
+  { id: 'stacking-zindex', en: 'Stacking & Occlusion', zh: '层叠与遮挡', principles: ['P-A5'],
+    re: /z-index|z index|stacking context|on top of|behind the|occlu|overlapping/ },
+  { id: 'flex-grid', en: 'Flex & Grid Layout', zh: '弹性与栅格布局', principles: ['P-A2', 'P-A4'],
+    re: /flexbox|flex-wrap|flex item|flex container|grid-template|display:\s*(flex|grid)|min-width|min-height:\s*0|gap:/ },
+  { id: 'responsive-viewport', en: 'Responsive & Viewport', zh: '响应式与视口', principles: ['P-A1', 'P-A4', 'P-G3'],
+    re: /responsive|viewport|media query|@media|breakpoint|device-width|\bvw\b|\bvh\b|zoom/ },
+  { id: 'browser-quirk', en: 'Browser / Platform Quirk', zh: '浏览器与平台差异', principles: ['P-G1', 'P-G2', 'P-G3'],
+    re: /safari|webkit|firefox|\bchrome\b|\bedge\b|internet explorer|\bios\b|android|webview|electron|in-app/ },
+  { id: 'animation-motion', en: 'Animation & Motion', zh: '动效', principles: ['P-D1', 'P-D2', 'P-D3'],
+    re: /animation|animate|transition|keyframes|transform|gsap|framer|spring/ },
+  { id: 'scroll-behavior', en: 'Scroll Behavior', zh: '滚动行为', principles: ['P-D4', 'P-F1', 'P-F5'],
+    re: /scroll-behavior|smooth scroll|scrollto|scrollintoview|scroll-snap|scrollspy|scroll listener|wheel|touchmove|overscroll/ },
+  { id: 'focus-a11y', en: 'Focus & Accessibility', zh: '焦点与无障碍', principles: ['P-E1', 'P-E2', 'P-E4'],
+    re: /focus|aria|screen reader|a11y|accessib|tabindex|keyboard nav|role=|voiceover|nvda/ },
+  { id: 'contrast-color', en: 'Contrast & Color Themes', zh: '色彩对比与主题', principles: ['P-C1', 'P-C2', 'P-C3'],
+    re: /contrast|color scheme|dark mode|light mode|\btheme\b|color-blind|prefers-color/ },
+  { id: 'font-typography', en: 'Fonts & Typography', zh: '字体与排版', principles: ['P-B1', 'P-B2', 'P-B3'],
+    re: /\bfont\b|typograph|line-height|letter-spacing|woff|font-display|text wrap|ellipsis|truncate/ },
+  { id: 'media-cls', en: 'Media & CLS', zh: '媒体与布局位移', principles: ['P-A3', 'P-H1'],
+    re: /\bimg\b|image|video|lazy ?load|aspect-ratio|layout shift|\bcls\b|poster|iframe/ },
+  { id: 'ssr-hydration', en: 'SSR & Hydration', zh: '服务端渲染与水合', principles: ['P-F4'],
+    re: /hydration|hydrate|ssr|server.render|mismatch|server html/ },
+  { id: 'race-state', en: 'Race & Listeners', zh: '竞态与监听器', principles: ['P-F5', 'P-H3'],
+    re: /race condition|event listener|unmount|memory leak|stale|debounce|throttle|abortcontroller|cleanup/ },
+  { id: 'layout-perf', en: 'Layout Performance', zh: '布局性能', principles: ['P-H2', 'P-H3'],
+    re: /reflow|layout thrash|\bjank\b|forced synchron|repaint|long task|frame drop|laggy|slow render/ },
+  { id: 'form-input', en: 'Forms & Mobile Input', zh: '表单与移动输入', principles: ['P-G4', 'P-E3'],
+    re: /\binput\b|\bform\b|autofill|virtual keyboard|keyboard opens|input zoom|textarea|select/ },
+  { id: 'general-ui', en: 'General UI', zh: '通用 UI', principles: ['P-A4', 'P-F2'], re: null },
+];
+function classify(text) {
+  const t = text.toLowerCase();
+  const hits = [];
+  for (const b of BUCKETS) {
+    if (b.re && b.re.test(t)) hits.push(b.id);
+    if (hits.length >= 3) break;
+  }
+  return hits.length ? hits : ['general-ui'];
+}
+
+// ---------- environment extraction ----------
+const ENV_PATTERNS = [
+  /(chrome|chromium|safari|firefox|edge|opera)[ \/]?(\d{1,3})?/g,
+  /(windows|macos|mac os x|linux|ubuntu|android ?\d{0,2}|ios ?\d{0,2})/g,
+  /(react|vue|svelte|angular|next\.js|nuxt|tailwind|bootstrap|typescript|webpack|vite|electron|webview|webkit)/g,
+  /(iphone|ipad|mobile|desktop|retina|high-dpi)/g,
+];
+function extractEnv(text) {
+  const t = text.toLowerCase();
+  const found = new Set();
+  for (const re of ENV_PATTERNS) {
+    let m;
+    while ((m = re.exec(t)) !== null && found.size < 10) {
+      const v = m[0].trim().replace(/\s+/g, ' ');
+      if (v && v.length <= 16) found.add(v);
+    }
+  }
+  return [...found].slice(0, 8);
+}
+
+// ---------- anonymization ----------
+function anonymize(text, repoSlug, category) {
+  let s = String(text || '');
+  const generic = `[${category.replace(/-/g, ' ')}]`;
+  s = s.split(repoSlug).join(generic);          // exact source slug
+  s = s.replace(/https?:\/\/[^\s)\]>]+/g, '[link]');
+  s = s.replace(/(^|\s)issues?\/\d+/g, '$1[ref]');
+  s = s.replace(/(^|\s)#\d+\b/g, '$1[ref]');
+  s = s.replace(/@[\w-]+/g, '@user');
+  s = s.replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, '[email]');
+  s = s.replace(/\s+/g, ' ').trim();
+  if (s.length > 600) s = s.slice(0, 600).replace(/\s\S*$/, '') + '…';
+  return s;
+}
+
+// ---------- github api ----------
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+async function ghSearch(q, sort, page) {
+  const params = new URLSearchParams({ q, per_page: '100', page: String(page) });
+  if (sort) params.set('sort', sort);
+  for (let attempt = 0; attempt < 4; attempt++) {
+    let res;
+    try {
+      res = await fetch(`https://api.github.com/search/issues?${params}`, {
+        headers: {
+          Authorization: `Bearer ${TOKEN}`,
+          Accept: 'application/vnd.github+json',
+          'User-Agent': 'wdp-case-collector',
+        },
+      });
+    } catch (e) { await sleep(5000 * (attempt + 1)); continue; }
+    if (res.status === 403 || res.status === 429) {
+      const reset = Number(res.headers.get('x-ratelimit-reset') || 0);
+      const wait = reset ? Math.min(Math.max(reset * 1000 - Date.now(), 20000), 90000) : 60000;
+      console.log(`  rate-limited, waiting ${Math.round(wait / 1000)}s`);
+      await sleep(wait);
+      continue;
+    }
+    if (!res.ok) throw new Error(`search ${res.status}: ${await res.text().then((t) => t.slice(0, 200))}`);
+    return res.json();
+  }
+  throw new Error('rate limit persisted — abort batch (progress saved)');
+}
+
+// ---------- state ----------
+function loadJSON(p, fallback) {
+  if (existsSync(p)) return JSON.parse(readFileSync(p, 'utf8'));
+  return fallback;
+}
+const dataDir = D('data');
+const chunkDir = D('cases/chunks');
+mkdirSync(dataDir, { recursive: true });
+mkdirSync(chunkDir, { recursive: true });
+
+const progress = loadJSON(D('data/progress.json'), { comboIndex: 0, round: 0 });
+const seen = loadJSON(D('data/seen.json'), {});
+const sources = loadJSON(D('data/sources.json'), []);
+let caseSeq = 1000 + (loadJSON(D('data/seq.json'), { next: 1 }).next - 0) || 1000;
+// seq stored as {next:N}; derive next id
+const seqState = loadJSON(D('data/seq.json'), { next: 1001 });
+let nextCaseId = seqState.next;
+
+// ---------- README helpers ----------
+function readREADME() { return readFileSync(D('README.md'), 'utf8'); }
+function setMarker(md, marker, content) {
+  const re = new RegExp(`(<!-- ${marker}:START -->)[\\s\\S]*?(<!-- ${marker}:END -->)`);
+  if (!re.test(md)) throw new Error(`README marker ${marker} missing — add it first`);
+  return md.replace(re, `$1\n${content}\n$2`);
+}
+
+// ---------- one round ----------
+async function runRound(roundNo) {
+  let newCount = 0;
+  let queriesUsed = 0;
+  const collected = [];
+  const seenThis = new Set();
+
+  while (newCount < 100 && queriesUsed < 14 && progress.comboIndex < MATRIX_SIZE) {
+    const { kw, repo, sort, page } = comboAt(progress.comboIndex);
+    progress.comboIndex++;
+    queriesUsed++;
+    const q = `repo:${repo[0]} is:issue "${kw}"`;
+    let data;
+    try {
+      data = await ghSearch(q, sort, page);
+    } catch (e) {
+      console.log(`  query failed (${e.message.slice(0, 80)}) — skipping combo`);
+      continue;
+    }
+    for (const it of data.items || []) {
+      const key = `${repo[0]}#${it.number}`;
+      const h = createHash('sha1').update(key).digest('hex').slice(0, 12);
+      if (seen[h] || seenThis.has(h)) continue;
+      const reactions = it.reactions?.total_count || 0;
+      const comments = it.comments || 0;
+      const labels = (it.labels || []).map((l) => l.name);
+      const hasBug = labels.some((l) => /bug/i.test(l));
+      if (!(reactions >= 2 || comments >= 4 || hasBug)) continue;
+
+      const title = anonymize(it.title || 'untitled', repo[0], repo[1]);
+      const body = anonymize(it.body || '', repo[0], repo[1]);
+      const text = title + ' ' + body;
+      const buckets = classify(text);
+      const env = extractEnv(text);
+      const principles = [...new Set(buckets.flatMap((b) => BUCKETS.find((x) => x.id === b).principles))];
+      const id = `CASE-${nextCaseId++}`;
+      seen[h] = 1;
+      seenThis.add(h);
+      if (!sources.includes(repo[0])) sources.push(repo[0]);
+      collected.push({
+        id, title, buckets, principles, env, labels: labels.slice(0, 5),
+        state: it.state, reactions, comments, excerpt: body, round: roundNo,
+      });
+      newCount++;
+      if (newCount >= 100) break;
+    }
+  }
+
+  if (newCount === 0) return { newCount, queriesUsed };
+
+  appendFileSync(D('data/cases.jsonl'), collected.map((c) => JSON.stringify(c)).join('\n') + '\n');
+  writeFileSync(D('data/seen.json'), JSON.stringify(seen));
+  writeFileSync(D('data/seq.json'), JSON.stringify({ next: nextCaseId }));
+  writeFileSync(D('data/sources.json'), JSON.stringify(sources, null, 2));
+
+  // chunk file, grouped by primary bucket
+  const byBucket = {};
+  for (const c of collected) (byBucket[c.buckets[0]] ||= []).push(c);
+  let chunk = `# Case Chunk ${String(roundNo).padStart(3, '0')} — Round ${roundNo}\n\n`;
+  chunk += `> ${newCount} anonymized cases · collected ${TODAY()} · environments kept, sources removed (aggregate sources: README end)\n`;
+  chunk += `> Symptom → principle lookup: [BUG-INDEX.md](../BUG-INDEX.md) · principle explanations: [WITH-CASES](../../principles/WITH-CASES.md)\n\n`;
+  for (const [bid, list] of Object.entries(byBucket)) {
+    const b = BUCKETS.find((x) => x.id === bid);
+    chunk += `## ${bid} — ${b.en} ${b.zh} · principles: ${b.principles.join(', ')}\n\n`;
+    for (const c of list) {
+      chunk += `### ${c.id} · ${c.title}\n`;
+      chunk += `- **Principles**: ${c.principles.join(', ')} · **Env**: ${c.env.join(', ') || 'unspecified'}\n`;
+      chunk += `- **Signals**: 👍${c.reactions} 💬${c.comments} · ${c.state}${c.labels.length ? ' · labels: ' + c.labels.join('/') : ''}\n`;
+      if (c.excerpt) chunk += `- **Excerpt**: ${c.excerpt}\n`;
+      chunk += `\n`;
+    }
+  }
+  writeFileSync(D(`cases/chunks/chunk-${String(roundNo).padStart(3, '0')}.md`), chunk);
+
+  // rebuild global index + bug index
+  const all = readFileSync(D('data/cases.jsonl'), 'utf8').trim().split('\n').map((l) => JSON.parse(l));
+  const idx = { updated: TODAY(), total: all.length, round: roundNo, buckets: {}, principles: {} };
+  for (const b of BUCKETS) idx.buckets[b.id] = { en: b.en, zh: b.zh, principles: b.principles, ids: [] };
+  for (const c of all) for (const bid of c.buckets) { if (!idx.buckets[bid]) idx.buckets[bid] = { en: bid, zh: '', principles: [], ids: [] }; idx.buckets[bid].ids.push(c.id); }
+  for (const b of BUCKETS) for (const p of b.principles) (idx.principles[p] ||= []).push(...idx.buckets[b.id].ids);
+  for (const p of Object.keys(idx.principles)) idx.principles[p] = [...new Set(idx.principles[p])];
+  writeFileSync(D('data/index.json'), JSON.stringify(idx));
+
+  let bugIndex = `# Bug Index — 按 bug 症状反查设计原则 / Symptom → Principle\n\n`;
+  bugIndex += `> 用法：拿着线上 bug 的**症状关键词**找到桶 → 桶内给出候选原则（[PURE.md](../principles/PURE.md)）与案例编号 → 到 chunk 文件读案例与环境。\n`;
+  bugIndex += `> 反方向（原则 → 案例）见 [WITH-CASES.md](../principles/WITH-CASES.md) 与 [data/index.json](../data/index.json)。\n\n`;
+  bugIndex += `Total cases: **${all.length}** · Rounds: **${roundNo}** · Updated: ${TODAY()}\n\n`;
+  for (const b of BUCKETS) {
+    const ids = idx.buckets[b.id].ids;
+    if (!ids.length) continue;
+    bugIndex += `### ${b.id} · ${b.en} ${b.zh}\n`;
+    bugIndex += `- **Principles**: ${b.principles.map((p) => `[${p}](../principles/PURE.md#${p.toLowerCase()})`).join(' ')} · **${ids.length} cases**\n`;
+    bugIndex += `- **Cases**: ${ids.slice(0, 30).join(', ')}${ids.length > 30 ? ` … +${ids.length - 30} more (see chunks)` : ''}\n\n`;
+  }
+  writeFileSync(D('cases/BUG-INDEX.md'), bugIndex);
+
+  // homepage update
+  let md = readREADME();
+  const topBuckets = Object.entries(idx.buckets)
+    .filter(([, v]) => v.ids.length).sort((a, b) => b[1].ids.length - a[1].ids.length)
+    .slice(0, 6).map(([k, v]) => `${k}(${v.ids.length})`).join(' · ');
+  md = setMarker(md, 'ROUND', [
+    `| Metric | Value |`,
+    `|---|---|`,
+    `| Rounds done | **${roundNo}** / 100 (target 10,000 cases) |`,
+    `| Cases collected | **${all.length}** |`,
+    `| Last round | +${newCount} cases · ${queriesUsed} queries |`,
+    `| Top symptom buckets | ${topBuckets} |`,
+    `| Updated | ${TODAY()} · full index: [BUG-INDEX.md](cases/BUG-INDEX.md) |`,
+  ].join('\n'));
+  md = setMarker(md, 'SOURCES', [
+    `Aggregated crawl sources (repos whose public issues were mined and anonymized into the case bank).`,
+    `Cases themselves carry **no** source identity — this list is the only place sources appear.`,
+    ``,
+    ...sources.map((s) => `- ${s}`),
+  ].join('\n'));
+  writeFileSync(D('README.md'), md);
+
+  return { newCount, queriesUsed };
+}
+
+// ---------- commit ----------
+function commitRound(roundNo, newCount, total) {
+  const git = (args) => execFileSync('git', args, { cwd: ROOT, encoding: 'utf8' });
+  git(['add', '-A']);
+  try {
+    git(['commit', '-m', `data: round ${roundNo} — +${newCount} anonymized cases (total ${total})`]);
+  } catch { /* nothing to commit */ }
+}
+
+// ---------- main ----------
+const rounds = Math.max(1, Number(process.argv.includes('--rounds') ? process.argv[process.argv.indexOf('--rounds') + 1] : 1));
+for (let i = 0; i < rounds; i++) {
+  progress.round += 1;
+  const t0 = Date.now();
+  process.stdout.write(`round ${progress.round} … `);
+  let res;
+  try {
+    res = await runRound(progress.round);
+  } catch (e) {
+    console.log(`ABORTED: ${e.message}`);
+    progress.round -= 1;
+    writeFileSync(D('data/progress.json'), JSON.stringify(progress));
+    process.exit(1);
+  }
+  if (res.newCount === 0) {
+    progress.round -= 1;
+    writeFileSync(D('data/progress.json'), JSON.stringify(progress));
+    console.log(`0 new cases — stopping batch`);
+    break;
+  }
+  const total = JSON.parse(readFileSync(D('data/index.json'), 'utf8')).total;
+  commitRound(progress.round, res.newCount, total);
+  writeFileSync(D('data/progress.json'), JSON.stringify(progress));
+  console.log(`+${res.newCount} (queries ${res.queriesUsed}, total ${total}, ${((Date.now() - t0) / 1000).toFixed(1)}s)`);
+}
+console.log('batch done');

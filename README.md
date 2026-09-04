@@ -32,7 +32,8 @@ Most "web design" lists are encyclopedic; this one is **practical-first**. Every
 3. [Design Tokens & Systems 设计令牌与体系](#3-design-tokens--systems)
 4. [Checklists & Practice 清单与实战](#4-checklists--practice)
 5. [AI-Agent Design Skills（2025-2026 新浪潮）](#5-ai-agent-design-skills)
-6. [Contribute 贡献](#6-contribute)
+6. [Our Principle System & Case Bank 自建原则体系与案例库（双向索引）](#6-our-principle-system--case-bank-自建原则体系与案例库双向索引)
+7. [Contribute 贡献](#7-contribute)
 
 ---
 
@@ -97,7 +98,41 @@ Most "web design" lists are encyclopedic; this one is **practical-first**. Every
 
 ---
 
-## 6. Contribute
+## 6. Our Principle System & Case Bank 自建原则体系与案例库（双向索引）
+
+> 把上面所有经典原则**综合成我们自己的 31 条**（P-A1…P-H3，8 组），并建立 **bug 案例库 ↔ 原则** 的双向索引：
+> 设计层原则告诉你"不该发生什么"，案例库告诉你"实际怎么发生的、在什么环境发生的"。
+
+**两个版本，随取随用：**
+
+| 版本 | 文件 | 用途 |
+|---|---|---|
+| 🧼 **纯净原则版** | [principles/PURE.md](principles/PURE.md) | 31 条 = 一句陈述 + 一句执行规则。Code review 逐项过表 / 直接喂给 AI agent 当 rule |
+| 📖 **原则+案例讲解版** | [principles/WITH-CASES.md](principles/WITH-CASES.md) | 每条原则挂真实案例（症状→根因→环境→修复→映射），含本项目 4 个实战案例全程记录 |
+
+**双向搜索架构：**
+
+```mermaid
+flowchart LR
+    P[原则 P-A1…P-H3<br/>PURE.md] <-->|原则→案例讲解| W[WITH-CASES.md]
+    W <-->|案例标注原则| C[案例库<br/>CASE-0001… / chunks]
+    S[bug 症状<br/>horizontal scroll / jitter / focus…] -->|BUG-INDEX.md 反查| B[症状桶<br/>16 类]
+    B <--> C
+    B -->|候选原则| P
+```
+
+- 🔍 **从 bug 找原则**（出 bug 时）：打开 [cases/BUG-INDEX.md](cases/BUG-INDEX.md) → 按症状关键词找桶 → 得到候选原则 + 同症状案例的环境记录
+- 🔍 **从原则找案例**（做 review 时）：[PURE.md](principles/PURE.md) 逐条过 → [WITH-CASES.md](principles/WITH-CASES.md) 读案例 → [data/index.json](data/index.json) 机器可读全量映射
+- 🌍 **环境标注是硬规则**：每个案例必须注明平台 / 浏览器 / 缩放或视口 / 技术栈——同一个 bug 在 Overlay 与经典滚动条、IAB 与桌面浏览器的答案完全不同
+
+### 📡 Case Bank 采集进度（每轮 100 条公开 issue，匿名化入库）
+
+<!-- ROUND:START -->
+<!-- ROUND:END -->
+
+案例规则：保留**具体 bug、根因、修复与环境**；**不保留**任何来源信息（仓库名/issue 号/用户名/链接全部剥除）——来源仅以聚合清单形式列在 README 结尾。
+
+## 7. Contribute
 
 - 原则是**活的**：发现更好/更高星/更实用的项目 → [开 Issue](https://github.com/eugenewang5425/web-design-principles/issues) 或 PR
 - 收录标准：**可执行性强**（读完 10 分钟内能改进页面）> 名气
@@ -110,3 +145,10 @@ Most "web design" lists are encyclopedic; this one is **practical-first**. Every
 MIT（本目录内容）：清单与评注可自由使用；各项目版权归属其各自作者。
 
 *Curated by [eugenewang5425](https://github.com/eugenewang5425) — GIS→Robotics 路上的前端实践。*
+
+---
+
+## Crawl Sources 采集来源清单
+
+<!-- SOURCES:START -->
+<!-- SOURCES:END -->
