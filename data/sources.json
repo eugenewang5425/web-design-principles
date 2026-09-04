@@ -6,5 +6,6 @@
   "preactjs/preact",
   "solidjs/solid",
   "QwikDev/qwik",
-  "alpinejs/alpine"
+  "alpinejs/alpine",
+  "vercel/next.js"
 ]
