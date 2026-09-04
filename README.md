@@ -128,6 +128,13 @@ flowchart LR
 ### 📡 Case Bank 采集进度（每轮 100 条公开 issue，匿名化入库）
 
 <!-- ROUND:START -->
+| Metric | Value |
+|---|---|
+| Rounds done | **1** (target: 100 rounds / 10,000 cases) |
+| Cases collected | **100** |
+| Last round | +100 cases · 1000 raw issues scanned |
+| Top symptom buckets | browser-quirk(36) · form-input(29) · media-cls(18) · ssr-hydration(10) · race-state(9) · animation-motion(8) |
+| Updated | 2026-09-05 · full index: [BUG-INDEX.md](cases/BUG-INDEX.md) |
 <!-- ROUND:END -->
 
 案例规则：保留**具体 bug、根因、修复与环境**；**不保留**任何来源信息（仓库名/issue 号/用户名/链接全部剥除）——来源仅以聚合清单形式列在 README 结尾。
@@ -151,4 +158,8 @@ MIT（本目录内容）：清单与评注可自由使用；各项目版权归�
 ## Crawl Sources 采集来源清单
 
 <!-- SOURCES:START -->
+Aggregated crawl sources (repos whose public issues were mined and anonymized into the case bank).
+Cases themselves carry **no** source identity — this list is the only place sources appear.
+
+- facebook/react
 <!-- SOURCES:END -->
