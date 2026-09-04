@@ -9,5 +9,6 @@
   "alpinejs/alpine",
   "vercel/next.js",
   "nuxt/nuxt",
-  "remix-run/remix"
+  "remix-run/remix",
+  "gatsbyjs/gatsby"
 ]
