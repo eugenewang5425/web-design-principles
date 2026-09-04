@@ -7,7 +7,7 @@
 <p align="center">
   <img alt="license" src="https://img.shields.io/badge/license-MIT-blue?style=for-the-badge" />
   <img alt="prs" src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=for-the-badge" />
-  <img alt="categories" src="https://img.shields.io/badge/categories-5-purple?style=for-the-badge" />
+  <a href="https://eugenewang5425.github.io/web-design-principles/"><img alt="case search" src="https://img.shields.io/badge/%F0%9F%94%8D_live_case_search-10%2C000%2B_cases-4f8cff?style=for-the-badge" /></a>
   <a href="https://github.com/eugenewang5425"><img alt="author" src="https://img.shields.io/badge/curated%20by-eugenewang5425-4f8cff?style=for-the-badge" /></a>
 </p>
 
@@ -103,12 +103,13 @@ Most "web design" lists are encyclopedic; this one is **practical-first**. Every
 > 把上面所有经典原则**综合成我们自己的 31 条**（P-A1…P-H3，8 组），并建立 **bug 案例库 ↔ 原则** 的双向索引：
 > 设计层原则告诉你"不该发生什么"，案例库告诉你"实际怎么发生的、在什么环境发生的"。
 
-**两个版本，随取随用：**
+**三个入口，随取随用：**
 
-| 版本 | 文件 | 用途 |
+| 入口 | 位置 | 用途 |
 |---|---|---|
+| 🔍 **在线检索页** | [eugenewang5425.github.io/web-design-principles](https://eugenewang5425.github.io/web-design-principles/) | 全案例库可视化检索：按症状/原则/环境/互动量过滤，搜索可分享（URL hash） |
 | 🧼 **纯净原则版** | [principles/PURE.md](principles/PURE.md) | 31 条 = 一句陈述 + 一句执行规则。Code review 逐项过表 / 直接喂给 AI agent 当 rule |
-| 📖 **原则+案例讲解版** | [principles/WITH-CASES.md](principles/WITH-CASES.md) | 每条原则挂真实案例（症状→根因→环境→修复→映射），含本项目 4 个实战案例全程记录 |
+| 📖 **原则+案例讲解版** | [principles/WITH-CASES.md](principles/WITH-CASES.md) | **教学版**：每条原则 = 陈述 + ❌/✅ 代码示例 + 经典案例（症状→根因→环境→修复→映射） |
 
 **双向搜索架构：**
 

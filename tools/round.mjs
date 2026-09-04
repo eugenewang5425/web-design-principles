@@ -292,6 +292,13 @@ async function runRound(roundNo) {
   for (const p of Object.keys(idx.principles)) idx.principles[p] = [...new Set(idx.principles[p])];
   writeFileSync(D('data/index.json'), JSON.stringify(idx));
 
+  // compact export for the GitHub Pages search page (docs/ is served by Pages)
+  mkdirSync(D('docs'), { recursive: true });
+  writeFileSync(D('docs/cases.json'), JSON.stringify(all.map((c) => ({
+    id: c.id, t: c.title, b: c.buckets, p: c.principles, e: c.env,
+    s: c.state, r: c.reactions, c: c.comments, x: c.excerpt.slice(0, 280),
+  }))));
+
   let bugIndex = `# Bug Index — 按 bug 症状反查设计原则 / Symptom → Principle\n\n`;
   bugIndex += `> 用法：拿着线上 bug 的**症状关键词**找到桶 → 桶内给出候选原则（[PURE.md](../principles/PURE.md)）与案例编号 → 到 chunk 文件读案例与环境。\n`;
   bugIndex += `> 反方向（原则 → 案例）见 [WITH-CASES.md](../principles/WITH-CASES.md) 与 [data/index.json](../data/index.json)。\n\n`;
@@ -317,7 +324,7 @@ async function runRound(roundNo) {
     `| Cases collected | **${all.length}** |`,
     `| Last round | +${newCount} cases · ${rawScanned} raw issues scanned |`,
     `| Top symptom buckets | ${topBuckets} |`,
-    `| Updated | ${TODAY()} · full index: [BUG-INDEX.md](cases/BUG-INDEX.md) |`,
+    `| Updated | ${TODAY()} · index: [BUG-INDEX.md](cases/BUG-INDEX.md) · search: [live page](https://eugenewang5425.github.io/web-design-principles/) |`,
   ].join('\n'));
   md = setMarker(md, 'SOURCES', [
     `Aggregated crawl sources (repos whose public issues were mined and anonymized into the case bank).`,

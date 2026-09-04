@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Case Bank Search · 网页设计 bug 案例库检索 — web-design-principles</title>
+<meta name="description" content="Search 10,000+ anonymized real-world web design & frontend bug cases by symptom, principle, environment. 按症状、设计原则、环境检索一万条真实前端 bug 案例。">
+<meta property="og:title" content="Case Bank Search · 网页设计 bug 案例库">
+<meta property="og:description" content="10,000+ anonymized real-world frontend bug cases ↔ 31 design principles, bidirectional lookup. 双向检索：bug 症状 ↔ 设计原则。">
+<meta property="og:type" content="website">
+<style>
+  :root {
+    --bg: #ffffff; --bg2: #f6f8fa; --fg: #1f2328; --fg2: #656d76;
+    --line: #d0d7de; --accent: #4f8cff; --chip: #eef2f8; --card: #ffffff;
+    --danger: #cf222e; --ok: #1a7f37;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0d1117; --bg2: #161b22; --fg: #e6edf3; --fg2: #8b949e;
+      --line: #30363d; --accent: #6ca4ff; --chip: #1d242f; --card: #10151d; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+    font: 15px/1.6 -apple-system, "Segoe UI", "Microsoft YaHei", Roboto, sans-serif; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  header { padding: 28px 20px 14px; max-width: 1100px; margin: 0 auto; }
+  header h1 { margin: 0 0 6px; font-size: 24px; }
+  header p { margin: 0; color: var(--fg2); }
+  header .links { margin-top: 10px; font-size: 14px; }
+  header .links a { margin-right: 14px; }
+  .stats { max-width: 1100px; margin: 10px auto 0; padding: 0 20px; color: var(--fg2); font-size: 13px; }
+  .bar { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line);
+    padding: 12px 20px; max-width: 1100px; margin: 14px auto 0; }
+  .bar input[type=text] { width: 100%; padding: 9px 12px; font-size: 15px; color: var(--fg);
+    background: var(--bg2); border: 1px solid var(--line); border-radius: 8px; outline: none; }
+  .bar input[type=text]:focus { border-color: var(--accent); }
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 9px; align-items: center; }
+  .filters select { padding: 5px 8px; font-size: 13px; color: var(--fg); background: var(--bg2);
+    border: 1px solid var(--line); border-radius: 6px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+  .chip { cursor: pointer; user-select: none; padding: 2px 10px; font-size: 12.5px; border-radius: 999px;
+    background: var(--chip); color: var(--fg2); border: 1px solid transparent; }
+  .chip.on { background: var(--accent); color: #fff; }
+  main { max-width: 1100px; margin: 0 auto; padding: 16px 20px 60px; }
+  .count { color: var(--fg2); font-size: 13.5px; margin: 4px 0 12px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--accent);
+    border-radius: 10px; padding: 12px 16px; margin-bottom: 12px; }
+  .card h3 { margin: 0 0 6px; font-size: 15.5px; line-height: 1.45; }
+  .card .meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .tag { font-size: 11.5px; padding: 1px 8px; border-radius: 999px; background: var(--chip); color: var(--fg2); }
+  .tag.p { color: var(--accent); font-weight: 600; }
+  .card .ex { color: var(--fg2); font-size: 13.5px; margin: 0; }
+  .card .sig { float: right; color: var(--fg2); font-size: 12.5px; }
+  .state-open { color: var(--ok); } .state-closed { color: var(--fg2); }
+  .pager { display: flex; gap: 10px; align-items: center; justify-content: center; margin: 22px 0; }
+  .pager button { padding: 7px 16px; font-size: 14px; color: var(--fg); background: var(--bg2);
+    border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+  .pager button:disabled { opacity: .45; cursor: default; }
+  .empty { text-align: center; color: var(--fg2); padding: 60px 0; }
+  footer { max-width: 1100px; margin: 0 auto; padding: 0 20px 40px; color: var(--fg2); font-size: 13px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🔍 Case Bank Search <span style="color:var(--fg2);font-weight:400">· 网页设计 bug 案例库检索</span></h1>
+  <p>10,000+ anonymized real-world bug cases ↔ 31 design principles. Every case keeps <b>bug + environment</b>, carries no source identity.
+  一万条真实案例：保留 bug 与环境，不含任何来源信息。</p>
+  <div class="links">
+    <a href="https://github.com/eugenewang5425/web-design-principles">⭐ GitHub repo</a>
+    <a href="https://github.com/eugenewang5425/web-design-principles/blob/main/principles/PURE.md">🧼 Pure principles</a>
+    <a href="https://github.com/eugenewang5425/web-design-principles/blob/main/principles/WITH-CASES.md">📖 Principles × cases</a>
+    <a href="https://github.com/eugenewang5425/web-design-principles/blob/main/cases/BUG-INDEX.md">🧭 Bug index</a>
+  </div>
+</header>
+<div class="stats" id="stats">loading data… (~4.5 MB, one-time)</div>
+
+<div class="bar">
+  <input id="q" type="text" placeholder='Search symptoms / root causes / environments…  搜索症状、根因、环境（如 "scrollbar" "hydration" "safari"）'>
+  <div class="filters">
+    <select id="principle"><option value="">Principle 原则: all</option></select>
+    <select id="state">
+      <option value="">State: all</option>
+      <option value="closed">closed (fix known)</option>
+      <option value="open">open</option>
+    </select>
+    <select id="sort">
+      <option value="hot">Sort: engagement</option>
+      <option value="id">Sort: case id</option>
+    </select>
+    <span id="envhint" style="font-size:12.5px;color:var(--fg2)">env filter → type <code>env:safari</code> in the search box</span>
+  </div>
+  <div class="chips" id="buckets"></div>
+</div>
+
+<main>
+  <div class="count" id="count"></div>
+  <div id="results"></div>
+  <div class="pager">
+    <button id="prev">← Prev</button>
+    <span id="pageinfo" style="color:var(--fg2);font-size:13.5px"></span>
+    <button id="next">Next →</button>
+  </div>
+</main>
+<footer>
+  Cases are anonymized excerpts collected from public issue trackers of popular frontend projects.
+  Full corpus: <a href="https://github.com/eugenewang5425/web-design-principles/tree/main/cases/chunks">cases/chunks</a> ·
+  machine-readable: <a href="https://github.com/eugenewang5425/web-design-principles/blob/main/data/index.json">data/index.json</a>.
+  <br>每轮 100 条持续收集中 · <a href="https://github.com/eugenewang5425/web-design-principles#6-our-principle-system--case-bank-自建原则体系与案例库双向索引">architecture 双向索引架构说明</a>
+</footer>
+
+<script>
+const BUCKETS = {
+  'overflow-scroll': ['Overflow & Scrollbars', '溢出与滚动条'],
+  'stacking-zindex': ['Stacking & Occlusion', '层叠与遮挡'],
+  'flex-grid': ['Flex & Grid', '弹性与栅格'],
+  'responsive-viewport': ['Responsive & Viewport', '响应式与视口'],
+  'browser-quirk': ['Browser Quirk', '浏览器差异'],
+  'animation-motion': ['Animation & Motion', '动效'],
+  'scroll-behavior': ['Scroll Behavior', '滚动行为'],
+  'focus-a11y': ['Focus & A11y', '焦点与无障碍'],
+  'contrast-color': ['Contrast & Themes', '色彩与主题'],
+  'font-typography': ['Fonts & Typography', '字体排版'],
+  'media-cls': ['Media & CLS', '媒体与布局位移'],
+  'ssr-hydration': ['SSR & Hydration', 'SSR 与水合'],
+  'race-state': ['Race & Listeners', '竞态与监听器'],
+  'layout-perf': ['Layout Perf', '布局性能'],
+  'form-input': ['Forms & Input', '表单与输入'],
+  'general-ui': ['General UI', '通用 UI'],
+};
+const PAGE = 50;
+let DATA = [], onBuckets = new Set(), page = 1;
+
+const $ = (s) => document.querySelector(s);
+const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+function parseQuery() {
+  const raw = $('#q').value.trim();
+  const parts = { text: [], env: [] };
+  for (const tok of raw.split(/\s+/)) {
+    if (tok.toLowerCase().startsWith('env:')) parts.env.push(tok.slice(4).toLowerCase());
+    else if (tok) parts.text.push(tok.toLowerCase());
+  }
+  return parts;
+}
+
+function filtered() {
+  const q = parseQuery();
+  const principle = $('#principle').value;
+  const state = $('#state').value;
+  const out = [];
+  for (const c of DATA) {
+    if (onBuckets.size && !c.b.some((b) => onBuckets.has(b))) continue;
+    if (principle && !c.p.includes(principle)) continue;
+    if (state && c.s !== state) continue;
+    if (q.env.length && !q.env.every((e) => c.e.join(' ').includes(e))) continue;
+    if (q.text.length) {
+      const hay = (c.t + ' ' + c.x).toLowerCase();
+      if (!q.text.every((t) => hay.includes(t))) continue;
+    }
+    out.push(c);
+  }
+  if ($('#sort').value === 'id') out.sort((a, b) => a.id.localeCompare(b.id));
+  else out.sort((a, b) => (b.r * 3 + b.c) - (a.r * 3 + a.c));
+  return out;
+}
+
+function chunkOf(id) {
+  const n = parseInt(id.slice(5), 10);
+  return 'chunk-' + String(Math.floor((n - 1001) / 100) + 1).padStart(3, '0');
+}
+
+function render() {
+  const rows = filtered();
+  const pages = Math.max(1, Math.ceil(rows.length / PAGE));
+  if (page > pages) page = pages;
+  const slice = rows.slice((page - 1) * PAGE, page * PAGE);
+  $('#count').textContent = `${rows.length.toLocaleString()} cases matched · 第 ${(page - 1) * PAGE + 1}–${Math.min(page * PAGE, rows.length)} 条`;
+  $('#results').innerHTML = slice.length ? slice.map((c) => `
+    <div class="card">
+      <span class="sig">👍${c.r} 💬${c.c} · <span class="state-${c.s}">${c.s}</span></span>
+      <h3>${esc(c.t)}</h3>
+      <div class="meta">
+        <span class="tag" style="font-weight:600">${c.id}</span>
+        ${c.b.map((b) => `<span class="tag" title="${BUCKETS[b] ? BUCKETS[b][0] + ' ' + BUCKETS[b][1] : b}">${esc(b)}</span>`).join('')}
+        ${c.p.map((p) => `<a class="tag p" href="https://github.com/eugenewang5425/web-design-principles/blob/main/principles/PURE.md#${p.toLowerCase()}" target="_blank" rel="noopener">${p}</a>`).join('')}
+        ${c.e.map((e) => `<span class="tag">${esc(e)}</span>`).join('')}
+      </div>
+      <p class="ex">${esc(c.x)}</p>
+      <a style="font-size:12.5px" href="https://github.com/eugenewang5425/web-design-principles/blob/main/cases/chunks/${chunkOf(c.id)}.md" target="_blank" rel="noopener">full case in repo →</a>
+    </div>`).join('')
+    : `<div class="empty">No cases matched. 试试放宽过滤条件 / try fewer filters.</div>`;
+  $('#pageinfo').textContent = `page ${page} / ${pages}`;
+  $('#prev').disabled = page <= 1;
+  $('#next').disabled = page >= pages;
+  const q = parseQuery();
+  const hash = new URLSearchParams();
+  if ($('#q').value.trim()) hash.set('q', $('#q').value.trim());
+  if (onBuckets.size) hash.set('b', [...onBuckets].join(','));
+  if ($('#principle').value) hash.set('p', $('#principle').value);
+  if (page > 1) hash.set('n', page);
+  history.replaceState(null, '', hash.toString() ? '#' + hash : '#');
+}
+
+function initControls() {
+  const chips = $('#buckets');
+  for (const [id, [en, zh]] of Object.entries(BUCKETS)) {
+    const el = document.createElement('span');
+    el.className = 'chip'; el.textContent = zh; el.title = en;
+    el.onclick = () => { el.classList.toggle('on'); el.classList.contains('on') ? onBuckets.add(id) : onBuckets.delete(id); page = 1; render(); };
+    chips.appendChild(el);
+  }
+  const ps = new Set();
+  DATA.forEach((c) => c.p.forEach((p) => ps.add(p)));
+  for (const p of [...ps].sort()) {
+    const o = document.createElement('option'); o.value = p; o.textContent = p; $('#principle').appendChild(o);
+  }
+  let t;
+  const onChange = () => { page = 1; clearTimeout(t); t = setTimeout(render, 120); };
+  $('#q').addEventListener('input', onChange);
+  $('#principle').onchange = onChange; $('#state').onchange = onChange; $('#sort').onchange = onChange;
+  $('#prev').onclick = () => { page--; render(); scrollTo(0, 0); };
+  $('#next').onclick = () => { page++; render(); scrollTo(0, 0); };
+
+  // restore from #hash so searches are shareable
+  const h = new URLSearchParams(location.hash.slice(1));
+  if (h.get('q')) $('#q').value = h.get('q');
+  if (h.get('b')) for (const b of h.get('b').split(',')) {
+    onBuckets.add(b);
+    [...chips.children].forEach((el) => { if (el.textContent === (BUCKETS[b] || [])[1]) el.classList.add('on'); });
+  }
+  if (h.get('p')) $('#principle').value = h.get('p');
+  if (h.get('n')) page = parseInt(h.get('n'), 10) || 1;
+}
+
+fetch('./cases.json').then((r) => r.json()).then((data) => {
+  DATA = data;
+  const rounds = Math.max(...data.map((c) => parseInt(c.id.slice(5), 10)));
+  $('#stats').innerHTML = `<b>${data.length.toLocaleString()}</b> cases · rounds up to ${Math.ceil((rounds - 1000) / 100)} ·
+    corpus grows 100/round · data refreshed per commit`;
+  initControls();
+  render();
+});
+</script>
+</body>
+</html>
