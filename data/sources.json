@@ -3,5 +3,6 @@
   "vuejs/core",
   "sveltejs/svelte",
   "angular/angular",
-  "preactjs/preact"
+  "preactjs/preact",
+  "solidjs/solid"
 ]
