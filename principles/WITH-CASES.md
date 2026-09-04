@@ -30,7 +30,13 @@
 
 ## B–C. Typography / Color 排版与色彩
 
-（本组原则细则见 PURE.md；爬取案例 bucket：`font-typography`、`contrast-color`。首批精选案例将在采集后回填。）
+（本组原则细则见 PURE.md；爬取案例 bucket：`font-typography`、`contrast-color`。）
+
+### CASE-4764 · 路由切换瞬间整页裸奔（样式被过早移除）
+- **环境**：Next.js 生产构建（dev 模式不复现！）· CSS Modules（styled-jsx 无此问题）
+- **症状**：点击 `next/link` 后，旧页面的 CSS Module 样式被立即移除，而 DOM 还在——过渡期间整页无样式闪白。
+- **根因**：样式移除时机绑定在"路由切换"而非"DOM 实际卸载"，生产构建的样式打包方式放大了时序差。
+- **对应原则**：P-B3（样式/字体的加载与卸载策略不得引起视觉突变——这是 font-display 教训在样式维度的重现）、P-F4（生产与开发行为不一致=环境矩阵缺口）、P-G3（dev 复现不了的生产 bug 是最危险的一类）。
 
 - P-B1 行长 45–75ch，先 measure 后栅格
 - P-B2 clamp() 流式字号需验证两端换行
@@ -52,11 +58,17 @@
 - **修复**：导航点击 `preventDefault` → JS 读取 computed `scroll-padding`/`scroll-margin` 计算目标 → 钳制后 `window.scrollTo` 瞬时跳转 + `history.pushState`；CSS 移除 `scroll-behavior: smooth`。瞬时跳转没有动画 = 没有失败面。
 - **对应原则**：P-D4（关键导航不得依赖内置平滑滚动）、P-G3（只在桌面 Chrome 发生 = 必须真机验证）、P-G1（落点计算同样被滚动条占位影响）。
 
+### CASE-4761 · 框架迁移击碎共享布局动画
+- **环境**：Linux · Chromium 系浏览器 · React 18.2 + Next.js 13 App Router + Framer Motion（Pages Router 下同代码正常）
+- **症状**：路由间共享布局动画（shared layout animation）迁移到 App Router 后完全失效。
+- **根因**：动画库假设"路由切换时组件树连续存在"；App Router 的流式渲染与服务端组件改变了挂载时序，共享布局的前提被打破。
+- **对应原则**：P-D1（动画状态必须可被路由与用户输入打断重建）、P-F5（动画状态与其生命周期契约绑定，换框架=换契约）、P-G3（框架迁移后动效必须真机回归）。
+
 ---
 
 ## E. Accessibility 无障碍
 
-（细则见 PURE.md；爬取案例 bucket：`focus-a11y`。）
+（细则见 PURE.md；爬取案例 bucket：`focus-a11y`，千余条——焦点丢失、trap 无出口、aria-live 缺失是最高频的三类。）
 
 ---
 
@@ -70,6 +82,12 @@
 - **根因**：末端保持带用 `!down` 判方向——向下滚 121~240px 区间内每一步都会把"保持"翻走；保持带只有单侧阈值，没有双向滞回，噪声必然穿越阈值。
 - **修复**：方向无关滞回（进入带 120px / 退出带 240px）+ HYST 12→16 + mousedown 期间释放 override；且所有"距底 N px"判定不再假设 `maxY` 恒定（滚动条税会让 maxY 漂移 ±15px，见 CASE-0001）。
 - **对应原则**：P-F1（单点阈值在噪声环境必然振荡 → 带宽+滞回）、P-F5（监听回调读取的位置状态需过期检查）、P-G1。
+
+### CASE-4756 · SSR 属性不匹配：`Warning: Prop className did not match`（780👍 的经典）
+- **环境**：Windows · Chrome · Next.js + styled-components v4 的 `css` prop
+- **症状**：服务端渲染输出的 class 与客户端首帧计算出的 class 不一致，每次水合控制台告警、样式闪烁。
+- **根因**：客户端才知道的值（运行时插入的 class、随机 id、时间戳）参与首次渲染——服务端永远算不出一样的结果。
+- **对应原则**：P-F4（渲染一致性：任何依赖浏览器环境的值必须延迟到 effect 中产生，或用确定性的 id 生成方案）。
 
 ---
 
@@ -87,11 +105,17 @@
 ### P-G3 Real Device, Real Zoom 真机真缩放
 本仓库三次"无头全绿但真机故障"（CASE-0001/0002/0004）的共同教训：**关键交互必须在用户真实浏览器 + 全缩放档位验证；主观视觉报告 + 真实环境复现 > 采样数据推断。**
 
+### CASE-9121 · Source Map 在特定浏览器失效，调试武器被缴械
+- **环境**：Chrome + webpack（多引擎项目）
+- **症状**：断点与报错位置全部对不上源码；作者分不清是打包器、浏览器还是自己的配置问题。
+- **教训**：调试基础设施本身也有浏览器兼容矩阵——`devtool` 模式 × 浏览器 × 压缩组合必须真机验证，否则生产事故时你恰好没有眼睛。
+- **对应原则**：P-G3（真机真缩放原则同样适用于"可调试性"）、P-H1（可调试性是性能预算的一部分：修不了的性能问题等于没有性能预算）。
+
 ---
 
 ## H. Performance & Perception 性能与感知
 
-（细则见 PURE.md；爬取案例 bucket：`layout-perf`、`race-state`、`media-cls`。）
+（细则见 PURE.md；爬取案例 bucket：`layout-perf`、`race-state`、`media-cls`——其中 media-cls 是全库最大症状桶，占总量四分之一：图片/视频/iframe 未预留空间导致的布局位移是当代网页第一高发病。）
 
 ---
 
