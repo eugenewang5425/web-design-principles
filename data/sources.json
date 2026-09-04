@@ -1,4 +1,5 @@
 [
   "facebook/react",
-  "vuejs/core"
+  "vuejs/core",
+  "sveltejs/svelte"
 ]
