@@ -2,5 +2,6 @@
   "facebook/react",
   "vuejs/core",
   "sveltejs/svelte",
-  "angular/angular"
+  "angular/angular",
+  "preactjs/preact"
 ]

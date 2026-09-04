@@ -130,10 +130,10 @@ flowchart LR
 <!-- ROUND:START -->
 | Metric | Value |
 |---|---|
-| Rounds done | **26** (target: 100 rounds / 10,000 cases) |
-| Cases collected | **2600** |
-| Last round | +100 cases · 1200 raw issues scanned |
-| Top symptom buckets | form-input(698) · browser-quirk(568) · media-cls(520) · focus-a11y(453) · animation-motion(392) · ssr-hydration(289) |
+| Rounds done | **27** (target: 100 rounds / 10,000 cases) |
+| Cases collected | **2700** |
+| Last round | +100 cases · 1400 raw issues scanned |
+| Top symptom buckets | form-input(720) · browser-quirk(592) · media-cls(543) · focus-a11y(461) · animation-motion(399) · ssr-hydration(301) |
 | Updated | 2026-09-05 · full index: [BUG-INDEX.md](cases/BUG-INDEX.md) |
 <!-- ROUND:END -->
 
@@ -165,4 +165,5 @@ Cases themselves carry **no** source identity — this list is the only place so
 - vuejs/core
 - sveltejs/svelte
 - angular/angular
+- preactjs/preact
 <!-- SOURCES:END -->
