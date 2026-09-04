@@ -11,5 +11,6 @@
   "nuxt/nuxt",
   "remix-run/remix",
   "gatsbyjs/gatsby",
-  "sveltejs/kit"
+  "sveltejs/kit",
+  "vitejs/vite"
 ]
