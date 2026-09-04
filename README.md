@@ -130,10 +130,10 @@ flowchart LR
 <!-- ROUND:START -->
 | Metric | Value |
 |---|---|
-| Rounds done | **49** (target: 100 rounds / 10,000 cases) |
-| Cases collected | **4900** |
-| Last round | +100 cases · 600 raw issues scanned |
-| Top symptom buckets | browser-quirk(1321) · media-cls(1232) · form-input(1007) · ssr-hydration(730) · focus-a11y(657) · animation-motion(552) |
+| Rounds done | **50** (target: 100 rounds / 10,000 cases) |
+| Cases collected | **5000** |
+| Last round | +100 cases · 700 raw issues scanned |
+| Top symptom buckets | browser-quirk(1331) · media-cls(1261) · form-input(1012) · ssr-hydration(779) · focus-a11y(662) · animation-motion(567) |
 | Updated | 2026-09-05 · full index: [BUG-INDEX.md](cases/BUG-INDEX.md) |
 <!-- ROUND:END -->
 
