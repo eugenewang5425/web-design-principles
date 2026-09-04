@@ -12,5 +12,6 @@
   "remix-run/remix",
   "gatsbyjs/gatsby",
   "sveltejs/kit",
-  "vitejs/vite"
+  "vitejs/vite",
+  "webpack/webpack"
 ]
