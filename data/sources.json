@@ -13,5 +13,6 @@
   "gatsbyjs/gatsby",
   "sveltejs/kit",
   "vitejs/vite",
-  "webpack/webpack"
+  "webpack/webpack",
+  "tailwindlabs/tailwindcss"
 ]

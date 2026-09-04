@@ -130,10 +130,10 @@ flowchart LR
 <!-- ROUND:START -->
 | Metric | Value |
 |---|---|
-| Rounds done | **94** (target: 100 rounds / 10,000 cases) |
-| Cases collected | **9400** |
-| Last round | +100 cases · 900 raw issues scanned |
-| Top symptom buckets | media-cls(2496) · browser-quirk(1979) · ssr-hydration(1542) · form-input(1329) · overflow-scroll(1190) · focus-a11y(1066) |
+| Rounds done | **95** (target: 100 rounds / 10,000 cases) |
+| Cases collected | **9500** |
+| Last round | +100 cases · 500 raw issues scanned |
+| Top symptom buckets | media-cls(2502) · browser-quirk(1993) · ssr-hydration(1543) · form-input(1332) · overflow-scroll(1268) · focus-a11y(1073) |
 | Updated | 2026-09-05 · full index: [BUG-INDEX.md](cases/BUG-INDEX.md) |
 <!-- ROUND:END -->
 
@@ -176,4 +176,5 @@ Cases themselves carry **no** source identity — this list is the only place so
 - sveltejs/kit
 - vitejs/vite
 - webpack/webpack
+- tailwindlabs/tailwindcss
 <!-- SOURCES:END -->
