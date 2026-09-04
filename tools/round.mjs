@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const D = (p) => join(ROOT, p);
-const TODAY = () => new Date().toISOString().slice(0, 10);
+const TODAY = () => new Date().toLocaleDateString('sv');
 
 // ---------- token (from git credential manager, never stored) ----------
 function getToken() {
@@ -124,14 +124,20 @@ function anonymize(text, repoSlug, category) {
   const generic = `[${category.replace(/-/g, ' ')}]`;
   s = s.split(repoSlug).join(generic);          // exact source slug
   s = s.replace(/https?:\/\/[^\s)\]>]+/g, '[link]');
-  s = s.replace(/(^|\s)issues?\/\d+/g, '$1[ref]');
-  s = s.replace(/(^|\s)#\d+\b/g, '$1[ref]');
+  // residual refs a URL strip leaves behind (markdown link tails etc.)
+  s = s.replace(/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/(issues|pulls?|discussions|commit)s?\/[0-9a-z]+/gi, '[ref]');
+  s = s.replace(/#issuecomment-\d+|#discussion_r?\d+|\/issues\/\d+|\/pull\/\d+|\/pulls\/\d+/gi, '[ref]');
+  s = s.replace(/#[0-9]+\b|\b(gh|issue|bug)-\d{2,}\b/gi, '[ref]');
   s = s.replace(/@[\w-]+/g, '@user');
   s = s.replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, '[email]');
   s = s.replace(/\s+/g, ' ').trim();
   if (s.length > 600) s = s.slice(0, 600).replace(/\s\S*$/, '') + '…';
   return s;
 }
+
+// drop roadmaps / meta threads — they match keyword buckets via prose but are not bug cases
+const DROP_LABELS = /type:\s*(big ?picture|meta)|roadmap|announcement|discussion/i;
+const BUG_WORDS = /\b(bug|broken|crash|hang|freez|flicker|glitch|jitter|jump|shift|wrong|incorrect|misalign|overflow|clipped|cut ?off|regression|leak|fails? to|doesn'?t (render|work|scroll|focus|open|close)|not (rendered|working|focused|visible|scrollable)|breaks? (layout|scroll)|stuck)\b/i;
 
 // ---------- github api (REST, core limit 5000/h) ----------
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -211,7 +217,12 @@ async function runRound(roundNo) {
       const comments = it.comments || 0;
       const labels = (it.labels || []).map((l) => l.name);
       const hasBug = labels.some((l) => /bug/i.test(l));
+      if (labels.some((l) => DROP_LABELS.test(l))) continue;
       if (!(reactions >= 2 || comments >= 4 || hasBug)) continue;
+
+      const rawTitle = it.title || 'untitled';
+      const rawBody = it.body || '';
+      if (!hasBug && !BUG_WORDS.test(rawTitle + ' ' + rawBody)) continue;
 
       const title = anonymize(it.title || 'untitled', slug, category);
       const body = anonymize(it.body || '', slug, category);
