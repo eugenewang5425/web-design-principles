@@ -130,10 +130,10 @@ flowchart LR
 <!-- ROUND:START -->
 | Metric | Value |
 |---|---|
-| Rounds done | **57** (target: 100 rounds / 10,000 cases) |
-| Cases collected | **5700** |
-| Last round | +100 cases · 500 raw issues scanned |
-| Top symptom buckets | media-cls(1476) · browser-quirk(1414) · ssr-hydration(1109) · form-input(1035) · focus-a11y(700) · animation-motion(628) |
+| Rounds done | **58** (target: 100 rounds / 10,000 cases) |
+| Cases collected | **5800** |
+| Last round | +100 cases · 1900 raw issues scanned |
+| Top symptom buckets | media-cls(1499) · browser-quirk(1425) · ssr-hydration(1127) · form-input(1069) · focus-a11y(717) · animation-motion(631) |
 | Updated | 2026-09-05 · full index: [BUG-INDEX.md](cases/BUG-INDEX.md) |
 <!-- ROUND:END -->
 
@@ -171,4 +171,5 @@ Cases themselves carry **no** source identity — this list is the only place so
 - alpinejs/alpine
 - vercel/next.js
 - nuxt/nuxt
+- remix-run/remix
 <!-- SOURCES:END -->

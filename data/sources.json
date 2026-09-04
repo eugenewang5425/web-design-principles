@@ -8,5 +8,6 @@
   "QwikDev/qwik",
   "alpinejs/alpine",
   "vercel/next.js",
-  "nuxt/nuxt"
+  "nuxt/nuxt",
+  "remix-run/remix"
 ]
