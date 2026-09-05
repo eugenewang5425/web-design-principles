@@ -55,7 +55,7 @@ real-world bug case bank — **apply the principles, then search how real projec
 
 | Project | ★ | Why it's useful 为什么实用 |
 |---|---|---|
-| [nevertoday/350-layout-compositions](https://github.com/nevertoday/350-layout-compositions) | 743 | **350 种版面构图**：栅格、编辑排版、视觉原则全覆盖——"没有灵感时翻这张表" |
+| [nevertoday/350-layout-compositions](https://github.com/nevertoday/350-layout-compositions) | 745 | **350 种版面构图**：栅格、编辑排版、视觉原则全覆盖——"没有灵感时翻这张表" |
 | [system-ui/theme-ui](https://github.com/system-ui/theme-ui) | 5395 | **约束驱动设计**：design tokens 直接约束组件渲染，所有"原则"最后都要落到 token 上 |
 | [adrianhajdin/brainwave](https://github.com/adrianhajdin/brainwave) | 1874 | **现代着陆页参考实现**：parallax + bento 布局的完整代码（React + Tailwind），照抄结构即可"看起来像 2026 年" |
 
@@ -80,8 +80,8 @@ real-world bug case bank — **apply the principles, then search how real projec
 
 | Project | ★ | Why it's useful 为什么实用 |
 |---|---|---|
-| [LottieFiles/motion-design-skill](https://github.com/LottieFiles/motion-design-skill) | 1524 | **动效原则 skill**：timing/easing/choreography + Disney 动画原则适配 UI——给 Agent 讲"怎么动得对" |
-| [gnurio/refactoring-ui-plugin](https://github.com/gnurio/refactoring-ui-plugin) | 359 | **Refactoring UI 原则落地**：10 个 Claude/Cursor skills，把 AI 设计审查结构化（书是好书，这个免去你自己总结） |
+| [LottieFiles/motion-design-skill](https://github.com/LottieFiles/motion-design-skill) | 1527 | **动效原则 skill**：timing/easing/choreography + Disney 动画原则适配 UI——给 Agent 讲"怎么动得对" |
+| [gnurio/refactoring-ui-plugin](https://github.com/gnurio/refactoring-ui-plugin) | 360 | **Refactoring UI 原则落地**：10 个 Claude/Cursor skills，把 AI 设计审查结构化（书是好书，这个免去你自己总结） |
 | [marvkr/better-design](https://github.com/marvkr/better-design) | 227 | **开源设计 MCP**：31 套品牌级主题（Linear/Stripe/Vercel…）+ 设计令牌 + UI 原则 + WCAG 规则一条龙 |
 | [trevorgrogers/ux-designer-skills](https://github.com/trevorgrogers/ux-designer-skills) | 4 | Claude Code 的 UX 设计师插件：Laws of UX + Nielsen 启发式 + WCAG + 设计系统 |
 
